@@ -3,9 +3,12 @@ from __future__ import annotations  # no installation needed
 import argparse  # no installation needed
 import json  # no installation needed
 import sys  # no installation needed
+from datetime import datetime, timezone  # no installation needed
 from typing import Any  # no installation needed
 
 from .config import load_config  # no installation needed
+from .modules.discovery.schema import Lead  # no installation needed
+from .modules.discovery.storage import write_leads  # no installation needed
 
 
 def _print(obj: Any) -> None:
@@ -34,6 +37,33 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _demo_leads(source: str, count: int) -> list[Lead]:
+    discovered_at = datetime.now(timezone.utc).isoformat()
+    leads: list[Lead] = []
+    for idx in range(1, count + 1):
+        leads.append(
+            Lead(
+                source=source,
+                source_url=f"https://example.com/sources/{source}",
+                discovered_at=discovered_at,
+                company_name=f"Demo Company {idx}",
+                website=f"https://example.com/companies/{idx}",
+                description=f"Sample discovery lead {idx} from {source}.",
+                signals={"rank": idx, "stage": "demo"},
+                raw={"seed_index": idx},
+            )
+        )
+    return leads
+
+
+def cmd_discovery_scaffold(args: argparse.Namespace) -> int:
+    cfg = load_config()
+    leads = _demo_leads(args.source, args.n)
+    output_path = write_leads(cfg, args.source, leads)
+    _print({"output_path": str(output_path), "count": len(leads)})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="acq_pipeline",
@@ -44,6 +74,14 @@ def build_parser() -> argparse.ArgumentParser:
     run = sub.add_parser("run", help="Run the pipeline (use --dry for smoke test).")
     run.add_argument("--dry", action="store_true", help="Print loaded config and exit.")
     run.set_defaults(func=cmd_run)
+
+    discovery = sub.add_parser("discovery", help="Discovery module commands.")
+    discovery_sub = discovery.add_subparsers(dest="discovery_command", required=True)
+
+    scaffold = discovery_sub.add_parser("scaffold", help="Write sample leads to NDJSON.")
+    scaffold.add_argument("--source", required=True, help="Source identifier.")
+    scaffold.add_argument("--n", type=int, default=1, help="Number of sample leads.")
+    scaffold.set_defaults(func=cmd_discovery_scaffold)
 
     return p
 
