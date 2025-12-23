@@ -8,6 +8,8 @@ from typing import Any  # no installation needed
 
 from .config import load_config  # no installation needed
 from .modules.discovery.generic_html import run_generic_html  # no installation needed
+from .modules.discovery.merge import merge_sources  # no installation needed
+from .modules.discovery.producthunt_html import run_producthunt_html  # no installation needed
 from .modules.discovery.schema import Lead  # no installation needed
 from .modules.discovery.storage import write_leads  # no installation needed
 
@@ -67,8 +69,6 @@ def cmd_discovery_scaffold(args: argparse.Namespace) -> int:
 
 def cmd_discovery_fetch(args: argparse.Namespace) -> int:
     cfg = load_config()
-    if args.source != "generic_html":
-        raise ValueError("Only the generic_html source is supported right now.")
 
     run_date = None
     if args.run_date:
@@ -77,9 +77,40 @@ def cmd_discovery_fetch(args: argparse.Namespace) -> int:
         except ValueError as exc:
             raise ValueError("run-date must be in YYYY-MM-DD format.") from exc
 
-    payload = run_generic_html(
-        cfg, limit=args.limit, run_date=run_date, seed_url=args.url
-    )
+    if args.source == "generic_html":
+        payload = run_generic_html(
+            cfg, limit=args.limit, run_date=run_date, seed_url=args.url
+        )
+    elif args.source == "producthunt_html":
+        payload = run_producthunt_html(
+            cfg, limit=args.limit, run_date=run_date, seed_url=args.url
+        )
+    else:
+        raise ValueError(f"Unsupported discovery source: {args.source}")
+    _print(payload)
+    return 0
+
+
+def _parse_sources_arg(args: argparse.Namespace) -> list[str]:
+    if args.sources:
+        return [item.strip() for item in args.sources.split(",") if item.strip()]
+    if args.source:
+        return [item.strip() for item in args.source if item.strip()]
+    return []
+
+
+def cmd_discovery_merge(args: argparse.Namespace) -> int:
+    cfg = load_config()
+    try:
+        run_date = date.fromisoformat(args.run_date)
+    except ValueError as exc:
+        raise ValueError("run-date must be in YYYY-MM-DD format.") from exc
+
+    sources = _parse_sources_arg(args)
+    if not sources:
+        raise ValueError("At least one source must be provided.")
+
+    payload = merge_sources(cfg, sources=sources, run_date=run_date)
     _print(payload)
     return 0
 
@@ -111,6 +142,19 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--run-date", help="Override run date (YYYY-MM-DD).")
     fetch.add_argument("--url", help="Override configured seed URL for this run.")
     fetch.set_defaults(func=cmd_discovery_fetch)
+
+    merge = discovery_sub.add_parser("merge", help="Merge discovery leads by date.")
+    merge.add_argument(
+        "--sources",
+        help="Comma-separated sources (e.g. generic_html,producthunt_html).",
+    )
+    merge.add_argument(
+        "--source",
+        action="append",
+        help="Repeatable source option (alternative to --sources).",
+    )
+    merge.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
+    merge.set_defaults(func=cmd_discovery_merge)
 
     return p
 

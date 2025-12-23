@@ -16,3 +16,9 @@ sources:
       name: ".name"
       url: "a::attr(href)"
       description: ".desc"
+
+  producthunt_html:
+    enabled: true
+    seed_urls:
+      - "tests/fixtures/producthunt_html/sample_listing.html"
+    base_url: "https://www.producthunt.com/"
