@@ -1,0 +1,76 @@
+{
+  "data": {
+    "posts": {
+      "edges": [
+        {
+          "node": {
+            "id": "ph_1",
+            "slug": "alpha",
+            "name": "Alpha",
+            "tagline": "Ship faster with Alpha.",
+            "description": "Alpha helps teams ship faster.",
+            "url": "https://www.producthunt.com/posts/alpha",
+            "website": "https://alpha.example.com",
+            "votesCount": 120,
+            "commentsCount": 12,
+            "topics": {
+              "edges": [
+                {"node": {"name": "DevTools", "slug": "devtools"}},
+                {"node": {"name": "AI", "slug": "ai"}}
+              ]
+            }
+          }
+        },
+        {
+          "node": {
+            "id": "ph_2",
+            "slug": "beta",
+            "name": "Beta",
+            "tagline": "Analytics made simple.",
+            "description": "Beta dashboards for teams.",
+            "url": "https://www.producthunt.com/posts/beta",
+            "votesCount": 85,
+            "commentsCount": 5,
+            "topics": {"edges": [{"node": {"name": "Analytics", "slug": "analytics"}}]}
+          }
+        },
+        {
+          "node": {
+            "id": "ph_3",
+            "slug": "gamma",
+            "name": "Gamma",
+            "tagline": "Secure workflows for teams.",
+            "description": "Gamma secures workflows.",
+            "url": "https://www.producthunt.com/posts/gamma",
+            "votesCount": 42,
+            "commentsCount": 3
+          }
+        },
+        {
+          "node": {
+            "id": "ph_4",
+            "slug": "delta",
+            "name": "Delta",
+            "tagline": "Launch checklist for startups.",
+            "description": "Delta launch checklist.",
+            "url": "https://www.producthunt.com/posts/delta",
+            "votesCount": 18,
+            "commentsCount": 2
+          }
+        },
+        {
+          "node": {
+            "id": "ph_5",
+            "slug": "epsilon",
+            "name": "Epsilon",
+            "tagline": "Customer feedback, unified.",
+            "description": "Epsilon feedback platform.",
+            "url": "https://www.producthunt.com/posts/epsilon",
+            "votesCount": 7,
+            "commentsCount": 1
+          }
+        }
+      ]
+    }
+  }
+}

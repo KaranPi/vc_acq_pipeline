@@ -22,3 +22,9 @@ sources:
     seed_urls:
       - "tests/fixtures/producthunt_html/sample_listing.html"
     base_url: "https://www.producthunt.com/"
+
+  producthunt_api:
+    enabled: true
+    mode: fixture
+    fixture_path: "tests/fixtures/producthunt_api/sample_response.json"
+

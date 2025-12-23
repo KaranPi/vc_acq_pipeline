@@ -6,6 +6,8 @@ import sys  # no installation needed
 from datetime import date, datetime, timezone  # no installation needed
 from typing import Any  # no installation needed
 
+from dotenv import load_dotenv  # already in env; no new install
+
 from .config import load_config  # no installation needed
 from .modules.discovery.filter import (  # no installation needed
     load_ndjson,
@@ -14,9 +16,13 @@ from .modules.discovery.filter import (  # no installation needed
 )
 from .modules.discovery.generic_html import run_generic_html  # no installation needed
 from .modules.discovery.merge import merge_sources  # no installation needed
+from .modules.discovery.producthunt_api import (  # no installation needed
+    run_producthunt_fixture,
+    run_producthunt_live as run_producthunt_api_live,
+)
 from .modules.discovery.producthunt_html import (  # no installation needed
     run_producthunt_html,
-    run_producthunt_live,
+    run_producthunt_live as run_producthunt_html_live,
 )
 from .modules.dossier.io import build_dossiers  # no installation needed
 from .modules.discovery.schema import Lead  # no installation needed
@@ -94,6 +100,10 @@ def cmd_discovery_fetch(args: argparse.Namespace) -> int:
         payload = run_producthunt_html(
             cfg, limit=args.limit, run_date=run_date, seed_url=args.url
         )
+    elif args.source == "producthunt_api":
+        if run_date is None:
+            raise ValueError("run-date is required for producthunt_api.")
+        payload = run_producthunt_fixture(cfg, limit=args.limit, run_date=run_date)
     else:
         raise ValueError(f"Unsupported discovery source: {args.source}")
     _print(payload)
@@ -107,12 +117,26 @@ def cmd_discovery_fetch_live(args: argparse.Namespace) -> int:
     except ValueError as exc:
         raise ValueError("run-date must be in YYYY-MM-DD format.") from exc
 
-    if args.source != "producthunt_html":
-        raise ValueError("Only producthunt_html is supported for fetch-live.")
-
-    payload = run_producthunt_live(
-        cfg, url=args.url, limit=args.limit, run_date=run_date
-    )
+    if args.source == "producthunt_html":
+        if not args.url:
+            raise ValueError("--url is required for producthunt_html fetch-live.")
+        payload = run_producthunt_html_live(
+            cfg, url=args.url, limit=args.limit, run_date=run_date
+        )
+    elif args.source == "producthunt_api":
+        payload = run_producthunt_api_live(
+            cfg,
+            limit=args.limit,
+            run_date=run_date,
+            order=args.order,
+            featured=args.featured,
+            posted_after=args.posted_after,
+            posted_before=args.posted_before,
+        )
+    else:
+        raise ValueError(
+            "Only producthunt_html or producthunt_api is supported for fetch-live."
+        )
     _print(payload)
     return 0
 
@@ -230,9 +254,17 @@ def build_parser() -> argparse.ArgumentParser:
     fetch_live.add_argument(
         "--source", default="producthunt_html", help="Source identifier."
     )
-    fetch_live.add_argument("--url", required=True, help="Live URL to fetch.")
+    fetch_live.add_argument("--url", help="Live URL to fetch (required for HTML).")
     fetch_live.add_argument("--limit", type=int, default=20, help="Max leads to write.")
     fetch_live.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
+    fetch_live.add_argument("--order", default="RANKING", help="Product Hunt order.")
+    fetch_live.add_argument(
+        "--featured",
+        action="store_true",
+        help="Only fetch featured posts (producthunt_api).",
+    )
+    fetch_live.add_argument("--posted-after", help="Posted after (ISO datetime).")
+    fetch_live.add_argument("--posted-before", help="Posted before (ISO datetime).")
     fetch_live.set_defaults(func=cmd_discovery_fetch_live)
 
     merge = discovery_sub.add_parser("merge", help="Merge discovery leads by date.")
@@ -277,6 +309,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    load_dotenv()
     parser = build_parser()
     args = parser.parse_args(argv)
     return int(args.func(args))
