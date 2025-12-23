@@ -1,0 +1,20 @@
+Redirect URI: https://localhost:8424/callback
+
+API Key: 64RMK04M7rBRyoWcjjqvhuEKqaLapcNxxyjjt-z5BdE
+
+API Secret: NU7CtJtoOliIQ1nR8_D-oJNNhGsU1U5D5WwosgRan5A
+
+
+
+
+
+-------
+
+
+
+Developer Token
+Please do not share your developer tokens with any untrusted sources.
+
+Token: RnF4yGT-SpuNZMBwRbCGipjkGttleEZmQvUv8oPC2Z0
+User Context: New User
+Expires: Never

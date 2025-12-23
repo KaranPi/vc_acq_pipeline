@@ -2,3 +2,7 @@ rate_limits:
   per_source_sleep_seconds: 2
 logging:
   level: INFO
+live_scrape:
+  timeout_seconds: 30
+  sleep_seconds: 2
+  max_retries: 3

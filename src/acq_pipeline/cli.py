@@ -14,7 +14,10 @@ from .modules.discovery.filter import (  # no installation needed
 )
 from .modules.discovery.generic_html import run_generic_html  # no installation needed
 from .modules.discovery.merge import merge_sources  # no installation needed
-from .modules.discovery.producthunt_html import run_producthunt_html  # no installation needed
+from .modules.discovery.producthunt_html import (  # no installation needed
+    run_producthunt_html,
+    run_producthunt_live,
+)
 from .modules.dossier.io import build_dossiers  # no installation needed
 from .modules.discovery.schema import Lead  # no installation needed
 from .modules.discovery.storage import write_leads  # no installation needed
@@ -93,6 +96,23 @@ def cmd_discovery_fetch(args: argparse.Namespace) -> int:
         )
     else:
         raise ValueError(f"Unsupported discovery source: {args.source}")
+    _print(payload)
+    return 0
+
+
+def cmd_discovery_fetch_live(args: argparse.Namespace) -> int:
+    cfg = load_config()
+    try:
+        run_date = date.fromisoformat(args.run_date)
+    except ValueError as exc:
+        raise ValueError("run-date must be in YYYY-MM-DD format.") from exc
+
+    if args.source != "producthunt_html":
+        raise ValueError("Only producthunt_html is supported for fetch-live.")
+
+    payload = run_producthunt_live(
+        cfg, url=args.url, limit=args.limit, run_date=run_date
+    )
     _print(payload)
     return 0
 
@@ -203,6 +223,17 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--run-date", help="Override run date (YYYY-MM-DD).")
     fetch.add_argument("--url", help="Override configured seed URL for this run.")
     fetch.set_defaults(func=cmd_discovery_fetch)
+
+    fetch_live = discovery_sub.add_parser(
+        "fetch-live", help="Fetch leads from a live source (manual use)."
+    )
+    fetch_live.add_argument(
+        "--source", default="producthunt_html", help="Source identifier."
+    )
+    fetch_live.add_argument("--url", required=True, help="Live URL to fetch.")
+    fetch_live.add_argument("--limit", type=int, default=20, help="Max leads to write.")
+    fetch_live.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
+    fetch_live.set_defaults(func=cmd_discovery_fetch_live)
 
     merge = discovery_sub.add_parser("merge", help="Merge discovery leads by date.")
     merge.add_argument(

@@ -3,7 +3,9 @@ from __future__ import annotations  # no installation needed
 from datetime import date, datetime, timezone  # no installation needed
 from urllib.parse import urljoin, urlparse  # no installation needed
 
+import requests  # already in env; no new install
 from bs4 import BeautifulSoup  # already in env; no new install
+from tenacity import retry, stop_after_attempt, wait_fixed  # already in env
 
 from ...config import ProjectConfig  # no installation needed
 from .generic_html import fetch_html  # no installation needed
@@ -133,6 +135,62 @@ def run_producthunt_html(
     return {
         "source": "producthunt_html",
         "url": seed_url,
+        "count": len(leads),
+        "output_path": str(output_path),
+    }
+
+
+def _live_scrape_settings(cfg: ProjectConfig) -> tuple[int, int, int]:
+    if isinstance(cfg.settings, dict):
+        settings = cfg.settings.get("live_scrape", {})
+    else:
+        settings = {}
+    if not isinstance(settings, dict):
+        settings = {}
+
+    def _get_int(key: str, default: int) -> int:
+        value = settings.get(key, default)
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    timeout = _get_int("timeout_seconds", 30)
+    sleep_seconds = _get_int("sleep_seconds", 2)
+    max_retries = _get_int("max_retries", 3)
+    if max_retries < 1:
+        max_retries = 1
+    return timeout, sleep_seconds, max_retries
+
+
+def run_producthunt_live(
+    cfg: ProjectConfig,
+    url: str,
+    limit: int,
+    run_date: date | None = None,
+) -> dict[str, object]:
+    timeout, sleep_seconds, max_retries = _live_scrape_settings(cfg)
+    headers = {"User-Agent": "acq-pipeline/0.1 (+https://example.com)"}
+
+    @retry(
+        stop=stop_after_attempt(max_retries),
+        wait=wait_fixed(sleep_seconds),
+        reraise=True,
+    )
+    def _fetch() -> str:
+        response = requests.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        return response.text
+
+    html = _fetch()
+    leads = parse_producthunt_listing_html(html, base_url=url)
+    if limit is not None and limit >= 0:
+        leads = leads[:limit]
+
+    output_path = write_leads(cfg, "producthunt_html", leads, run_date=run_date)
+    return {
+        "source": "producthunt_html",
+        "url": url,
         "count": len(leads),
         "output_path": str(output_path),
     }
