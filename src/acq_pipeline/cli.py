@@ -7,10 +7,15 @@ from datetime import date, datetime, timezone  # no installation needed
 from typing import Any  # no installation needed
 
 from .config import load_config  # no installation needed
-from .modules.discovery.filter import load_ndjson, run_filter, score_record  # no installation needed
+from .modules.discovery.filter import (  # no installation needed
+    load_ndjson,
+    run_filter,
+    score_record,
+)
 from .modules.discovery.generic_html import run_generic_html  # no installation needed
 from .modules.discovery.merge import merge_sources  # no installation needed
 from .modules.discovery.producthunt_html import run_producthunt_html  # no installation needed
+from .modules.dossier.io import build_dossiers  # no installation needed
 from .modules.discovery.schema import Lead  # no installation needed
 from .modules.discovery.storage import write_leads  # no installation needed
 
@@ -159,6 +164,18 @@ def cmd_discovery_score(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dossier_build(args: argparse.Namespace) -> int:
+    cfg = load_config()
+    try:
+        run_date = date.fromisoformat(args.run_date)
+    except ValueError as exc:
+        raise ValueError("run-date must be in YYYY-MM-DD format.") from exc
+
+    payload = build_dossiers(cfg, run_date=run_date, limit=args.limit)
+    _print(payload)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="acq_pipeline",
@@ -214,6 +231,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     score_cmd.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
     score_cmd.set_defaults(func=cmd_discovery_score)
+
+    dossier = sub.add_parser("dossier", help="Dossier generation commands.")
+    dossier_sub = dossier.add_subparsers(dest="dossier_command", required=True)
+
+    dossier_build = dossier_sub.add_parser("build", help="Build markdown dossiers.")
+    dossier_build.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
+    dossier_build.add_argument(
+        "--limit", type=int, default=10, help="Max dossiers to write."
+    )
+    dossier_build.set_defaults(func=cmd_dossier_build)
 
     return p
 
