@@ -5,3 +5,14 @@ sources:
     enabled: false
   wellfound:
     enabled: false
+
+  generic_html:
+    enabled: true
+    seed_urls:
+      - "tests/fixtures/generic_html/sample_directory.html"
+    base_url: "https://example.com/"
+    selectors:
+      card: "div.card"
+      name: ".name"
+      url: "a::attr(href)"
+      description: ".desc"
