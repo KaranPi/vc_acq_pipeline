@@ -1,0 +1,3 @@
+# Optional: dossier/PDF outputs
+reportlab==4.2.5
+pillow==11.0.0

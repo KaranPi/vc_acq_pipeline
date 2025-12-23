@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtualenv / Conda
+.venv/
+venv/
+.env/
+.env.* 
+.conda/
+conda-meta/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Project outputs (keep structure via .gitkeep)
+data/**
+!data/**/.gitkeep
+
+outputs/**
+!outputs/**/.gitkeep
+
+proof_of_work/_local/**
+!proof_of_work/_local/.gitkeep
+
+# Logs
+*.log
+outputs/logs/**
+!outputs/logs/.gitkeep
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Local secrets / keys
+*.pem
+*.key

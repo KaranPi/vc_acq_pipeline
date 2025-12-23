@@ -1,0 +1,10 @@
+# Optional: dynamic-page crawling
+playwright==1.49.0
+
+# Optional: Selenium fallback (only if needed)
+selenium==4.26.1
+webdriver-manager==4.0.2
+
+# Optional: async fetching helpers
+aiohttp==3.11.10
+anyio==4.7.0

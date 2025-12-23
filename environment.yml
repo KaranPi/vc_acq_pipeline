@@ -1,0 +1,14 @@
+name: vc-acq-pipeline
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+
+# Note:
+# After creating/activating this conda env, install pip deps via:
+#   pip install -r requirements/base.txt -r requirements/dev.txt
+# Optional:
+#   pip install -r requirements/scraping.txt
+#   pip install -r requirements/nlp.txt
+#   pip install -r requirements/reporting.txt

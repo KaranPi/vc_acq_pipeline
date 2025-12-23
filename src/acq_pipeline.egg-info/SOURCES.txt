@@ -1,0 +1,9 @@
+pyproject.toml
+src/acq_pipeline/__main__.py
+src/acq_pipeline/cli.py
+src/acq_pipeline/config.py
+src/acq_pipeline.egg-info/PKG-INFO
+src/acq_pipeline.egg-info/SOURCES.txt
+src/acq_pipeline.egg-info/dependency_links.txt
+src/acq_pipeline.egg-info/top_level.txt
+tests/test_smoke.py

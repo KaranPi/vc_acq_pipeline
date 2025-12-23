@@ -1,0 +1,7 @@
+sources:
+  producthunt:
+    enabled: false
+  indiehackers:
+    enabled: false
+  wellfound:
+    enabled: false
