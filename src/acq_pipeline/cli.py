@@ -7,6 +7,7 @@ from datetime import date, datetime, timezone  # no installation needed
 from typing import Any  # no installation needed
 
 from .config import load_config  # no installation needed
+from .modules.discovery.filter import load_ndjson, run_filter, score_record  # no installation needed
 from .modules.discovery.generic_html import run_generic_html  # no installation needed
 from .modules.discovery.merge import merge_sources  # no installation needed
 from .modules.discovery.producthunt_html import run_producthunt_html  # no installation needed
@@ -115,6 +116,49 @@ def cmd_discovery_merge(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_discovery_filter(args: argparse.Namespace) -> int:
+    cfg = load_config()
+    try:
+        run_date = date.fromisoformat(args.run_date)
+    except ValueError as exc:
+        raise ValueError("run-date must be in YYYY-MM-DD format.") from exc
+
+    payload = run_filter(cfg, run_date=run_date, threshold=args.threshold)
+    _print(payload)
+    return 0
+
+
+def cmd_discovery_score(args: argparse.Namespace) -> int:
+    cfg = load_config()
+    try:
+        run_date = date.fromisoformat(args.run_date)
+    except ValueError as exc:
+        raise ValueError("run-date must be in YYYY-MM-DD format.") from exc
+
+    run_date_str = run_date.isoformat()
+    input_path = (
+        cfg.paths.data_dir / "interim" / "merged" / run_date_str / "leads.ndjson"
+    )
+    if not input_path.exists():
+        raise FileNotFoundError(f"Missing merged input: {input_path}")
+
+    records = load_ndjson(input_path)
+    payload = []
+    for record in records:
+        score_payload = score_record(record)
+        payload.append(
+            {
+                "company_name": record.get("company_name"),
+                "source": record.get("source"),
+                "filter_score": score_payload["filter_score"],
+                "filter_reasons": score_payload["filter_reasons"],
+            }
+        )
+
+    _print(payload)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="acq_pipeline",
@@ -155,6 +199,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     merge.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
     merge.set_defaults(func=cmd_discovery_merge)
+
+    filter_cmd = discovery_sub.add_parser(
+        "filter", help="Filter merged leads with keyword scoring."
+    )
+    filter_cmd.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
+    filter_cmd.add_argument(
+        "--threshold", type=int, default=2, help="Minimum score to keep."
+    )
+    filter_cmd.set_defaults(func=cmd_discovery_filter)
+
+    score_cmd = discovery_sub.add_parser(
+        "score", help="Score merged leads without writing files."
+    )
+    score_cmd.add_argument("--run-date", required=True, help="Run date (YYYY-MM-DD).")
+    score_cmd.set_defaults(func=cmd_discovery_score)
 
     return p
 
