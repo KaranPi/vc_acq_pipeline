@@ -184,7 +184,7 @@ def _live_scrape_settings(cfg: ProjectConfig) -> tuple[int, int, int]:
 
 
 def run_producthunt_fixture(
-    cfg: ProjectConfig, limit: int, run_date: date
+    cfg: ProjectConfig, limit: int, run_date: date, overwrite: bool = False
 ) -> dict[str, object]:
     sources_cfg = cfg.sources.get("sources", cfg.sources)
     source_cfg = sources_cfg.get("producthunt_api")
@@ -203,9 +203,17 @@ def run_producthunt_fixture(
     if limit is not None and limit >= 0:
         leads = leads[:limit]
 
-    output_path = write_leads(cfg, "producthunt_api", leads, run_date=run_date)
+    output_path = write_leads(
+        cfg,
+        "producthunt_api",
+        leads,
+        run_date=run_date,
+        mode="fixture",
+        overwrite=overwrite,
+    )
     return {
         "source": "producthunt_api",
+        "mode": "fixture",
         "url_or_fixture": fixture_path,
         "count": len(leads),
         "output_path": str(output_path),
@@ -220,6 +228,7 @@ def run_producthunt_live(
     featured: bool = False,
     posted_after: str | None = None,
     posted_before: str | None = None,
+    overwrite: bool = False,
 ) -> dict[str, object]:
     token = os.getenv("PRODUCTHUNT_DEV_TOKEN")
     if not token:
@@ -254,9 +263,17 @@ def run_producthunt_live(
         return response.json(), dict(response.headers)
 
     if limit <= 0:
-        output_path = write_leads(cfg, "producthunt_api", [], run_date=run_date)
+        output_path = write_leads(
+            cfg,
+            "producthunt_api",
+            [],
+            run_date=run_date,
+            mode="live",
+            overwrite=overwrite,
+        )
         return {
             "source": "producthunt_api",
+            "mode": "live",
             "url_or_fixture": "https://api.producthunt.com/v2/api/graphql",
             "count": 0,
             "output_path": str(output_path),
@@ -304,9 +321,17 @@ def run_producthunt_live(
             break
         after = str(end_cursor)
 
-    output_path = write_leads(cfg, "producthunt_api", leads, run_date=run_date)
+    output_path = write_leads(
+        cfg,
+        "producthunt_api",
+        leads,
+        run_date=run_date,
+        mode="live",
+        overwrite=overwrite,
+    )
     payload: dict[str, object] = {
         "source": "producthunt_api",
+        "mode": "live",
         "url_or_fixture": "https://api.producthunt.com/v2/api/graphql",
         "count": len(leads),
         "output_path": str(output_path),

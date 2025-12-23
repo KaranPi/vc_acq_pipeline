@@ -103,7 +103,9 @@ def cmd_discovery_fetch(args: argparse.Namespace) -> int:
     elif args.source == "producthunt_api":
         if run_date is None:
             raise ValueError("run-date is required for producthunt_api.")
-        payload = run_producthunt_fixture(cfg, limit=args.limit, run_date=run_date)
+        payload = run_producthunt_fixture(
+            cfg, limit=args.limit, run_date=run_date, overwrite=args.overwrite
+        )
     else:
         raise ValueError(f"Unsupported discovery source: {args.source}")
     _print(payload)
@@ -132,6 +134,7 @@ def cmd_discovery_fetch_live(args: argparse.Namespace) -> int:
             featured=args.featured,
             posted_after=args.posted_after,
             posted_before=args.posted_before,
+            overwrite=args.overwrite,
         )
     else:
         raise ValueError(
@@ -246,6 +249,7 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--limit", type=int, default=25, help="Max leads to write.")
     fetch.add_argument("--run-date", help="Override run date (YYYY-MM-DD).")
     fetch.add_argument("--url", help="Override configured seed URL for this run.")
+    fetch.add_argument("--overwrite", action="store_true", help="Overwrite output file.")
     fetch.set_defaults(func=cmd_discovery_fetch)
 
     fetch_live = discovery_sub.add_parser(
@@ -265,6 +269,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     fetch_live.add_argument("--posted-after", help="Posted after (ISO datetime).")
     fetch_live.add_argument("--posted-before", help="Posted before (ISO datetime).")
+    fetch_live.add_argument(
+        "--overwrite", action="store_true", help="Overwrite output file."
+    )
     fetch_live.set_defaults(func=cmd_discovery_fetch_live)
 
     merge = discovery_sub.add_parser("merge", help="Merge discovery leads by date.")

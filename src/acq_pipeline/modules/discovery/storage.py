@@ -18,9 +18,14 @@ def _run_date_str(run_date: date | str) -> str:
     raise ValueError("run_date must be a date or ISO string.")
 
 
-def get_run_dir(cfg: ProjectConfig, source: str, run_date: date | str) -> Path:
+def get_run_dir(
+    cfg: ProjectConfig, source: str, run_date: date | str, mode: str | None = None
+) -> Path:
     run_date_str = _run_date_str(run_date)
-    return cfg.paths.data_dir / "raw" / source / run_date_str
+    base = cfg.paths.data_dir / "raw" / source / run_date_str
+    if mode:
+        return base / mode
+    return base
 
 
 def append_ndjson(path: Path, record_dict: dict[str, object]) -> None:
@@ -37,12 +42,17 @@ def write_leads(
     source: str,
     leads: list[Lead],
     run_date: date | str | None = None,
+    mode: str | None = None,
+    overwrite: bool = False,
 ) -> Path:
     if run_date is None:
         run_date = date.today()
-    run_dir = get_run_dir(cfg, source, run_date)
+    run_dir = get_run_dir(cfg, source, run_date, mode=mode)
     run_dir.mkdir(parents=True, exist_ok=True)
     path = run_dir / "leads.ndjson"
+
+    if overwrite and path.exists():
+        path.unlink()
 
     if not leads:
         path.touch(exist_ok=True)
